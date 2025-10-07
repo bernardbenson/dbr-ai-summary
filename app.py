@@ -1,5 +1,6 @@
 import os
 import re
+import argparse
 import pandas as pd
 import smtplib
 import requests
@@ -12,8 +13,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# === Parse command line arguments ===
+parser = argparse.ArgumentParser(description='Send daily Bible reading emails')
+parser.add_argument('--test', action='store_true', help='Enable test mode (uses test recipients and finds nearest weekday reading)')
+args = parser.parse_args()
+TEST_MODE = args.test
+
 # === CONFIG ===
-TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 
 BIBLE_ID = "de4e12af7f28f599-02"  # ESV
 API_KEY = os.getenv("BIBLE_API_KEY")
@@ -168,7 +174,7 @@ if day_of_week in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
         ai_content = generate_summary_and_takeaways(passages_plain_text)
 
         # Build email body with scripture readings first, then summary
-        html_body = f"<h2>Daily Bible Reading for {today.strftime('%x')}</h2>"
+        html_body = ""
 
         # List passages first
         html_body += "<h3>Today's Scripture Readings</h3>"
