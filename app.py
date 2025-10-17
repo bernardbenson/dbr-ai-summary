@@ -14,8 +14,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # === Parse command line arguments ===
-parser = argparse.ArgumentParser(description='Send daily Bible reading emails')
-parser.add_argument('--test', action='store_true', help='Enable test mode (uses test recipients and finds nearest weekday reading)')
+parser = argparse.ArgumentParser(description="Send daily Bible reading emails")
+parser.add_argument(
+    "--test",
+    action="store_true",
+    help="Enable test mode (uses test recipients and finds nearest weekday reading)",
+)
 args = parser.parse_args()
 TEST_MODE = args.test
 
@@ -24,15 +28,19 @@ TEST_MODE = args.test
 BIBLE_ID = "de4e12af7f28f599-02"  # ESV
 API_KEY = os.getenv("BIBLE_API_KEY")
 if not API_KEY:
-    raise ValueError("BIBLE_API_KEY environment variable is required. Please set it with your API key from api.scripture.api.bible")
+    raise ValueError(
+        "BIBLE_API_KEY environment variable is required. Please set it with your API key from api.scripture.api.bible"
+    )
 headers = {"api-key": API_KEY}
 
 # === Load reading plan ===
-bible_readings = pd.read_excel('bible_reading_2025.xlsx')
+bible_readings = pd.read_excel("bible_reading_2025.xlsx")
+
 
 def format_reading_list(reading):
     """Take 'John 3:16, Psalm 23' and make a list of passages."""
-    return [part.strip() for part in reading.split(',') if part.strip()]
+    return [part.strip() for part in reading.split(",") if part.strip()]
+
 
 def get_passage(reference: str) -> str:
     """Fetch formatted passage text from api.bible as HTML."""
@@ -49,11 +57,14 @@ def get_passage(reference: str) -> str:
     last_id = verses[-1]["id"]
 
     passage_id = f"{first_id}-{last_id}"
-    passage_url = f"https://api.scripture.api.bible/v1/bibles/{BIBLE_ID}/passages/{passage_id}"
+    passage_url = (
+        f"https://api.scripture.api.bible/v1/bibles/{BIBLE_ID}/passages/{passage_id}"
+    )
     passage_response = requests.get(passage_url, headers=headers)
     passage_data = passage_response.json()
 
     return passage_data["data"]["content"]
+
 
 def generate_summary_and_takeaways(passages_text: str) -> dict:
     """Generate AI summary and key takeaways aligned with Church of Christ doctrine."""
@@ -81,27 +92,21 @@ etc.
 
     try:
         response = ollama.chat(
-            model='gpt-oss:20b',
-            messages=[{'role': 'user', 'content': prompt}]
+            model="gpt-oss:20b", messages=[{"role": "user", "content": prompt}]
         )
 
-        content = response['message']['content']
+        content = response["message"]["content"]
 
         # Parse the response
-        parts = content.split('KEY TAKEAWAYS:')
-        summary = parts[0].replace('SUMMARY:', '').strip()
-        takeaways = parts[1].strip() if len(parts) > 1 else ''
+        parts = content.split("KEY TAKEAWAYS:")
+        summary = parts[0].replace("SUMMARY:", "").strip()
+        takeaways = parts[1].strip() if len(parts) > 1 else ""
 
-        return {
-            'summary': summary,
-            'takeaways': takeaways
-        }
+        return {"summary": summary, "takeaways": takeaways}
     except Exception as e:
         print(f"Error generating summary: {e}")
-        return {
-            'summary': 'Unable to generate summary at this time.',
-            'takeaways': ''
-        }
+        return {"summary": "Unable to generate summary at this time.", "takeaways": ""}
+
 
 def send_email(subject, html_body, recipients, sender_name):
     from_email = "cahabaheightschurch@gmail.com"
@@ -110,16 +115,16 @@ def send_email(subject, html_body, recipients, sender_name):
     formatted_from = f"{sender_name} <{from_email}>"
 
     msg = MIMEMultipart("alternative")
-    msg['From'] = formatted_from
-    msg['To'] = ", ".join(recipients)
-    msg['Subject'] = subject
+    msg["From"] = formatted_from
+    msg["To"] = ", ".join(recipients)
+    msg["Subject"] = subject
 
     # Attach both plain text (fallback) and HTML
-    msg.attach(MIMEText("This email requires HTML view.", 'plain'))
-    msg.attach(MIMEText(html_body, 'html'))
+    msg.attach(MIMEText("This email requires HTML view.", "plain"))
+    msg.attach(MIMEText(html_body, "html"))
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(from_email, from_password)
         server.sendmail(from_email, recipients, msg.as_string())
@@ -128,34 +133,38 @@ def send_email(subject, html_body, recipients, sender_name):
     except Exception as e:
         print(f"Failed to send email: {e}")
 
+
 # === Main flow ===
 today = datetime.now()
-day_of_week = today.strftime('%A')
+day_of_week = today.strftime("%A")
 
 # Test mode: Find today's date or the nearest weekday with a reading
 if TEST_MODE:
     print("🧪 TEST MODE ENABLED")
     # Filter for dates >= today
     future_readings = bible_readings[
-        (bible_readings['date'].notna()) &
-        (pd.to_datetime(bible_readings['date']) >= today.replace(hour=0, minute=0, second=0, microsecond=0))
+        (bible_readings["date"].notna())
+        & (
+            pd.to_datetime(bible_readings["date"])
+            >= today.replace(hour=0, minute=0, second=0, microsecond=0)
+        )
     ]
     if not future_readings.empty:
         # Pick the first weekday reading
         for idx, row in future_readings.iterrows():
-            test_date = pd.to_datetime(row['date'])
-            test_day = test_date.strftime('%A')
-            if test_day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
+            test_date = pd.to_datetime(row["date"])
+            test_day = test_date.strftime("%A")
+            if test_day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]:
                 today = test_date
                 day_of_week = test_day
                 print(f"Using test date: {today.strftime('%Y-%m-%d')} ({day_of_week})")
                 break
 
-if day_of_week in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
-    reading = bible_readings[bible_readings['date'] == today.strftime('%Y-%m-%d')]
+if day_of_week in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]:
+    reading = bible_readings[bible_readings["date"] == today.strftime("%Y-%m-%d")]
     if not reading.empty:
         subject = f"Daily Bible Reading for {today.strftime('%x')}"
-        passages = format_reading_list(reading['reading'].values[0])
+        passages = format_reading_list(reading["reading"].values[0])
 
         # Fetch all passages and collect text
         print("Fetching scripture passages...")
@@ -166,7 +175,7 @@ if day_of_week in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
             passage_html = get_passage(ref)
             passages_html += f"<h3>{ref}</h3>{passage_html}"
             # Strip HTML tags for plain text version (simple approach)
-            plain = re.sub('<[^<]+?>', '', passage_html)
+            plain = re.sub("<[^<]+?>", "", passage_html)
             passages_plain_text += f"\n{ref}\n{plain}\n"
 
         # Generate AI summary and takeaways
@@ -186,28 +195,38 @@ if day_of_week in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
         # Add AI Summary
         html_body += "<h3>Summary</h3>"
         # Convert **text** to <strong>text</strong> in summary
-        summary_formatted = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', ai_content['summary'])
+        summary_formatted = re.sub(
+            r"\*\*(.+?)\*\*", r"<strong>\1</strong>", ai_content["summary"]
+        )
         html_body += f"<p>{summary_formatted.replace(chr(10), '</p><p>')}</p>"
 
         # Add Key Takeaways
-        if ai_content['takeaways']:
+        if ai_content["takeaways"]:
             html_body += "<h3>Key Takeaways</h3>"
             # Convert markdown list to HTML and handle **bold** markdown
-            takeaway_lines = ai_content['takeaways'].split('\n')
+            takeaway_lines = ai_content["takeaways"].split("\n")
             html_body += "<ul>"
             for line in takeaway_lines:
-                if line.strip().startswith('-'):
+                if line.strip().startswith("-"):
                     # Convert **text** to <strong>text</strong>
-                    formatted_line = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', line.strip()[1:].strip())
+                    formatted_line = re.sub(
+                        r"\*\*(.+?)\*\*",
+                        r"<strong>\1</strong>",
+                        line.strip()[1:].strip(),
+                    )
                     html_body += f"<li>{formatted_line}</li>"
             html_body += "</ul>"
 
         # Use test recipient in test mode
         if TEST_MODE:
-            recipients = ['bernardbenson.dl@gmail.com', 'jlselby231@gmail.com']
+            recipients = [
+                "bernardbenson.dl@gmail.com",
+                "jlselby231@gmail.com",
+                "gregkline1@gmail.com",
+            ]
             print(f"📧 Sending test email to: {recipients}")
         else:
-            recipients = ['cahabachurch@googlegroups.com','bernardbenson.dl@gmail.com']
+            recipients = ["cahabachurch@googlegroups.com", "bernardbenson.dl@gmail.com"]
 
         send_email(subject, html_body, recipients, "Cahaba Heights church of Christ")
     else:
