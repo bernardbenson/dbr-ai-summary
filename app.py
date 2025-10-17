@@ -110,7 +110,11 @@ etc.
 
 def send_email(subject, html_body, recipients, sender_name):
     from_email = "cahabaheightschurch@gmail.com"
-    from_password = "oefc sldb vlem yyrj"  # app password
+    from_password = os.getenv("EMAIL_PASSWORD")
+    if not from_password:
+        raise ValueError(
+            "EMAIL_PASSWORD environment variable is required. Please set it with your Gmail app password"
+        )
 
     formatted_from = f"{sender_name} <{from_email}>"
 

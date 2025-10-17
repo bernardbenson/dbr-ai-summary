@@ -20,28 +20,62 @@ A Python application that sends daily Bible reading emails on weekdays with AI-g
 
 ## Installation
 
-### 1. Install uv
-
-If you don't have `uv` installed:
-
-```bash
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Or via pip
-pip install uv
-```
-
-### 2. Install Ollama
-
-Download and install Ollama from [ollama.com](https://ollama.com/)
+### 1. Install Python 3.11+
 
 **macOS:**
 ```bash
+# Using Homebrew
+brew install python@3.11
+
+# Or download from python.org
+# Visit https://www.python.org/downloads/macos/
+```
+
+**Windows:**
+```bash
+# Download from python.org
+# Visit https://www.python.org/downloads/windows/
+# Make sure to check "Add Python to PATH" during installation
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update
+sudo apt install python3.11 python3.11-pip python3.11-venv
+```
+
+**Linux (CentOS/RHEL/Fedora):**
+```bash
+sudo dnf install python3.11 python3.11-pip
+# Or for older versions:
+# sudo yum install python3.11 python3.11-pip
+```
+
+### 2. Install uv (Python Package Manager)
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Alternative (any platform):**
+```bash
+pip install uv
+```
+
+### 3. Install Ollama
+
+**macOS:**
+```bash
+# Using Homebrew
 brew install ollama
+
+# Or download installer from https://ollama.com/download
 ```
 
 **Linux:**
@@ -49,9 +83,24 @@ brew install ollama
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-**Windows:** Download installer from [ollama.com/download](https://ollama.com/download)
+**Windows:**
+1. Download the installer from [ollama.com/download](https://ollama.com/download)
+2. Run the installer as administrator
+3. Restart your terminal after installation
 
-### 3. Pull the Required LLM Model
+### 4. Start Ollama and Pull the Required LLM Model
+
+**Start Ollama service:**
+
+```bash
+# macOS/Linux
+ollama serve
+
+# Windows (run in a separate terminal)
+ollama serve
+```
+
+**Pull the model (in a new terminal):**
 
 ```bash
 ollama pull gpt-oss:20b
@@ -59,14 +108,14 @@ ollama pull gpt-oss:20b
 
 This downloads the GPT-OSS 20B model used for generating summaries.
 
-### 4. Clone the Repository
+### 5. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd dbr-ai-summary
 ```
 
-### 5. Install Python Dependencies
+### 6. Install Python Dependencies
 
 ```bash
 uv sync
@@ -87,20 +136,43 @@ This will install all required dependencies:
 
 ```bash
 BIBLE_API_KEY=your-api-key-here
+EMAIL_PASSWORD=your-gmail-app-password
 ```
 
 **Alternative:** Export environment variables directly:
 
+**macOS/Linux:**
 ```bash
 export BIBLE_API_KEY="your-api-key-here"
+export EMAIL_PASSWORD="your-gmail-app-password"
 ```
 
-To get a Bible API key:
+**Windows (Command Prompt):**
+```cmd
+set BIBLE_API_KEY=your-api-key-here
+set EMAIL_PASSWORD=your-gmail-app-password
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:BIBLE_API_KEY="your-api-key-here"
+$env:EMAIL_PASSWORD="your-gmail-app-password"
+```
+
+**Getting API Keys:**
+
+**Bible API Key:**
 1. Visit [api.scripture.api.bible](https://scripture.api.bible/)
 2. Sign up for a free account
 3. Create an API key
 
-**Important:** The `BIBLE_API_KEY` is required. The app will fail to start if it's not set.
+**Gmail App Password:**
+1. Enable 2-factor authentication on your Gmail account
+2. Go to Google Account settings > Security > App passwords
+3. Generate a new app password for "Mail"
+4. Use this 16-character password (not your regular Gmail password)
+
+**Important:** Both `BIBLE_API_KEY` and `EMAIL_PASSWORD` are required. The app will fail to start if either is not set.
 
 ### 2. Prepare Reading Plan
 
@@ -120,32 +192,55 @@ Edit `app.py` to set your recipients:
 
 Sends email to production recipients if today is a weekday:
 
+**macOS/Linux:**
 ```bash
 python app.py
+# or
+uv run app.py
+```
+
+**Windows:**
+```cmd
+python app.py
+# or
+uv run app.py
 ```
 
 ### Test Mode
 
 Sends email to test recipients using today's date or the nearest future weekday:
 
+**macOS/Linux:**
 ```bash
+python app.py --test
+# or with environment variable
 TEST_MODE=true python app.py
+# or with uv
+uv run app.py --test
 ```
 
-Test mode behavior:
+**Windows (Command Prompt):**
+```cmd
+python app.py --test
+# or with environment variable
+set TEST_MODE=true && python app.py
+# or with uv
+uv run app.py --test
+```
+
+**Windows (PowerShell):**
+```powershell
+python app.py --test
+# or with environment variable
+$env:TEST_MODE="true"; python app.py
+# or with uv
+uv run app.py --test
+```
+
+**Test mode behavior:**
 - Uses test recipient list instead of production
 - Finds today's reading (or next weekday reading if today is weekend)
 - Prints debug information to console
-
-### Running with uv
-
-```bash
-# Normal mode
-uv run app.py
-
-# Test mode
-TEST_MODE=true uv run app.py
-```
 
 ## How It Works
 
@@ -162,24 +257,36 @@ To run daily automatically:
 
 ### macOS/Linux (cron)
 
+1. Open terminal and edit crontab:
 ```bash
 crontab -e
 ```
 
-Add (runs at 6 AM weekdays):
+2. Add this line (runs at 6 AM weekdays):
 ```
 0 6 * * 1-5 cd /path/to/dbr-ai-summary && /usr/local/bin/python app.py
 ```
 
+3. Save and exit (Ctrl+X, then Y, then Enter in nano)
+
 ### Windows (Task Scheduler)
 
-1. Open Task Scheduler
-2. Create Basic Task
-3. Set trigger: Daily, Monday-Friday, 6:00 AM
-4. Action: Start a program
-5. Program: `python`
-6. Arguments: `app.py`
-7. Start in: `C:\path\to\dbr-ai-summary`
+1. Press `Win + R`, type `taskschd.msc`, press Enter
+2. Click "Create Basic Task" in the right panel
+3. **Name:** "Daily Bible Reading"
+4. **Trigger:** Daily
+5. **Start date:** Today, **Time:** 6:00 AM
+6. **Recur every:** 1 day
+7. **Action:** Start a program
+8. **Program/script:** `python` (or full path like `C:\Python311\python.exe`)
+9. **Arguments:** `app.py`
+10. **Start in:** `C:\path\to\dbr-ai-summary`
+11. Click Finish
+
+**To run only on weekdays:**
+- After creating, right-click the task > Properties
+- Go to Triggers tab > Edit
+- Check "Weekly" and select Mon-Fri only
 
 ## Troubleshooting
 
@@ -207,18 +314,38 @@ ollama serve
 ### "BIBLE_API_KEY environment variable is required"
 
 This error means the API key is not set. Create a `.env` file:
+
+**macOS/Linux:**
 ```bash
 echo "BIBLE_API_KEY=your-api-key-here" > .env
+echo "EMAIL_PASSWORD=your-gmail-app-password" >> .env
 ```
 
-Or export it:
+**Windows:**
+```cmd
+echo BIBLE_API_KEY=your-api-key-here > .env
+echo EMAIL_PASSWORD=your-gmail-app-password >> .env
+```
+
+Or export them directly:
+
+**macOS/Linux:**
 ```bash
 export BIBLE_API_KEY="your-api-key-here"
+export EMAIL_PASSWORD="your-gmail-app-password"
+```
+
+**Windows:**
+```cmd
+set BIBLE_API_KEY=your-api-key-here
+set EMAIL_PASSWORD=your-gmail-app-password
 ```
 
 ### Bible API 401 Unauthorized
 
 Check that `BIBLE_API_KEY` is set correctly:
+
+**macOS/Linux:**
 ```bash
 # If using .env file
 cat .env
@@ -227,11 +354,22 @@ cat .env
 echo $BIBLE_API_KEY
 ```
 
+**Windows:**
+```cmd
+# If using .env file
+type .env
+
+# If using set command
+echo %BIBLE_API_KEY%
+```
+
 ### Email Not Sending
 
-- Verify Gmail app password is correct (app.py:98)
-- Check that Gmail allows "Less secure app access" or use App Password
+- Verify `EMAIL_PASSWORD` environment variable is set with your Gmail app password
+- Ensure you're using a Gmail app password (not your regular password)
+- Check that 2-factor authentication is enabled on your Gmail account
 - Ensure SMTP port 587 is not blocked by firewall
+- Verify the sender email address is correct in the code
 
 ## Project Structure
 

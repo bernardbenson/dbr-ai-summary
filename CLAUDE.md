@@ -24,6 +24,7 @@ Required dependencies:
 
 Environment variables:
 - `BIBLE_API_KEY`: **Required** - API key for api.scripture.api.bible
+- `EMAIL_PASSWORD`: **Required** - Gmail app password for sending emails
 - `TEST_MODE`: Optional - Set to "true" to enable test mode (uses test recipients and finds nearest weekday reading)
 
 ## Running the Application
@@ -68,7 +69,6 @@ The script runs once and:
 
 ## Important Notes
 
-- Email credentials are hardcoded in app.py:96-97 (Gmail app password)
-- Recipients list is hardcoded in app.py:191 (production) and app.py:188 (test mode)
+- Recipients list is hardcoded in app.py:229 (production) and app.py:222-226 (test mode)
 - Ollama must be running locally with the `gpt-oss:20b` model available
 - No error handling for missing Excel file or API failures beyond basic checks
